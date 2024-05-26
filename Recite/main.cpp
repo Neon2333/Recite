@@ -1,10 +1,11 @@
 #include "MainWindow.h"
 #include <QtWidgets/QApplication>
+#include "GlobalApplication.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    MainWindow w;
+    GlobalApplication* app = new GlobalApplication(argc, argv);
+    MainWindow w(app);
     w.show();
-    return a.exec();
+    return app->exec();
 }

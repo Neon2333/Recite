@@ -2,6 +2,7 @@
 #pragma execution_character_set("utf-8")
 
 #include <QMainWindow>
+#include "GlobalApplication.h"
 #include "Word.h"
 #include "JsonOper.h"
 
@@ -23,6 +24,9 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QFileInfoList>
+
+#include <QKeyEvent>
+#include <QCloseEvent>
 
 class MainWindow : public QMainWindow
 {
@@ -80,6 +84,8 @@ private:
     QTextEdit* textEdit_usefulExpressions;   //常用搭配
 
 private:
+    bool editMode = false;      //处于编辑模式
+    GlobalApplication* app;     
 
     QHash<QString, Word>* wordListCurrentPage;   //当前这一页的单词表，从1个json读取，合计50个单词
     QHash<QString, Word>* wordListAll;   //加载所有json文件，读取所有单词，用于查询。
@@ -89,15 +95,16 @@ private:
     int curPageIndex = 0;   //当前页码（改变，要写入config）
     int countWordList = 0;  //单词表个数（改变，要写入config）
 
-    bool editMode = false;      //处于编辑模式
     Word selectedWord;      //当前选中的词
 
     QTimer* timer_probar;       //控制进度条计时器
 
 private:
+    void init();    //初始化
+
     void initMainWindow();  //初始化页面，创建控件
 
-    void init();    //初始化
+    void connectEvents();   //所有信号和handler绑定
 
     void readWordListCurrentPage();    //按照index读取当前页的json存储到WordListCurrentPage
 
@@ -118,13 +125,26 @@ private:
     void collapaseWord(Word wd); //折叠某个词的所有属性
 
 
-private slots:
+signals:
+    void modeChanged(bool isEditMode);
+
+
+public slots:
+    void onModeChanged(bool isEditMode);
+    void onKeyIPressed();
+    void onKeyRPressed();
+    void onKeyEnterPressed();
+    void onKeyAltEnterPressed();
 
 protected:
-    virtual void paintEvent(QPaintEvent* ev) override;
+    //void keyPressEvent(QKeyEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(GlobalApplication* app, QWidget* parent = nullptr);
     ~MainWindow();
+
+    void editModeSetter(bool isEditMode);
 
 };

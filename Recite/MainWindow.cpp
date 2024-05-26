@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+MainWindow::MainWindow(GlobalApplication* a, QWidget* parent)
+    :app(a), QMainWindow(parent)
 {
     wordListCurrentPage = new QHash<QString, Word>();
     wordListAll = new QHash<QString, Word>();
@@ -20,9 +20,22 @@ MainWindow::~MainWindow()
 
 }
 
+void MainWindow::editModeSetter(bool isEditMode)
+{
+    if (editMode != isEditMode)
+    {
+        editMode = isEditMode;
+        emit modeChanged(editMode);
+    }
+}
+
 void MainWindow::init()
 {
+    //初始化窗口控件
     initMainWindow();
+
+    //关联事件handler
+    connectEvents();    
 
 #if 1
     Word wd;
@@ -43,7 +56,7 @@ void MainWindow::init()
     Word wd1;
     wd1.pageIndex = 1;
     wd1.spelling = "person";
-    wd1.meanings = QList<QString>{ "人类" };
+    wd1.meanings = QList<QString>{ "人类2" };
     wd1.type = "n";
     wd1.synonyms = QList<QString>{ "lilin","lilin" };
     wd1.nearSynonyms = QList<QString>{ "person","people" };
@@ -55,11 +68,11 @@ void MainWindow::init()
     wd1.adv = QList<QString>{ "person","person" };
     wd1.usefulExpressions = QList<QString>{ "person","hahah","wwww" };
     wordListCurrentPage->insert("person", wd1);
-    selectedWord = wd;
+    selectedWord = wd1;
 
 #endif
 
-    //读取配置文件
+    //读配置文件
     QList<int> configParas = JsonOper::readConfig(configPath);
     curPageIndex = configParas.at(0);
     countWordList = configParas.at(1);
@@ -73,8 +86,6 @@ void MainWindow::init()
     //读取当前页单词表
     readWordListCurrentPage();
 
-    //初始化窗口控件
-
     //树状显示当前页
     treeShowCurrentPage();
 
@@ -85,11 +96,16 @@ void MainWindow::init()
     readWordListAll(wordListDir);
 }
 
+void MainWindow::connectEvents()
+{
+    connect(this, &MainWindow::modeChanged, this, &MainWindow::onModeChanged);
+    connect(app, &GlobalApplication::keyIPressed, this, &MainWindow::onKeyIPressed);
+    connect(app, &GlobalApplication::keyRPressed, this, &MainWindow::onKeyRPressed);
+}
 
 void MainWindow::initMainWindow()
 {
     //右侧第一行
-
     label_spelling = new QLabel(this);
     label_spelling->setFixedSize(350, 200);
     label_spelling->setText("annynomous");  //不能放在字体、Alignment等后面，否则设置不了
@@ -524,8 +540,6 @@ void MainWindow::addWordToTree(Word wd)
 }
 
 
-
-
 void MainWindow::readWordListAll(QString jsonDir)
 {
     //不存在，则创建空的0.json
@@ -617,6 +631,9 @@ void MainWindow::updateConfig(int curPage, int countWord)
     JsonOper::writeConfig(configPath, curPageIndex, countWordList);
 }
 
+
+
+
 void MainWindow::expandWord(Word wd)
 {
 
@@ -632,15 +649,17 @@ void MainWindow::showSelectedWord()
     label_spelling->setText(selectedWord.spelling);
 
     textEdit_meanings->clear();
+    textEdit_meanings->append("释义：");
     for (auto item : selectedWord.meanings)
     {
         textEdit_meanings->append(item);
         textEdit_meanings->setAlignment(Qt::AlignCenter);
     }
 
-    label_partOfSpeech->setText(selectedWord.type);
+    label_partOfSpeech->setText("词性：\n" + selectedWord.type);
 
     textEdit_synonyms->clear();
+    textEdit_synonyms->append("同义词：");
     for (auto item : selectedWord.synonyms)
     {
         textEdit_synonyms->append(item);
@@ -648,6 +667,7 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_nearSynonyms->clear();
+    textEdit_nearSynonyms->append("近义词：");
     for (auto item : selectedWord.nearSynonyms)
     {
         textEdit_nearSynonyms->append(item);
@@ -655,6 +675,7 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_antonym->clear();
+    textEdit_antonym->append("反义词：");
     for (auto item : selectedWord.antonyms)
     {
         textEdit_antonym->append(item);
@@ -662,6 +683,7 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_similar->clear();
+    textEdit_similar->append("形近词：");
     for (auto item : selectedWord.similar)
     {
         textEdit_similar->append(item);
@@ -669,6 +691,7 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_noun->clear();
+    textEdit_noun->append("名词：");
     for (auto item : selectedWord.noun)
     {
         textEdit_noun->append(item);
@@ -676,35 +699,72 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_verb->clear();
-    for (auto item : selectedWord.noun)
+    textEdit_verb->append("动词：");
+    for (auto item : selectedWord.verb)
     {
         textEdit_verb->append(item);
         textEdit_verb->setAlignment(Qt::AlignCenter);
     }
 
     textEdit_adj->clear();
-    for (auto item : selectedWord.noun)
+    textEdit_adj->append("形容词：");
+    for (auto item : selectedWord.adj)
     {
         textEdit_adj->append(item);
         textEdit_adj->setAlignment(Qt::AlignCenter);
     }
 
     textEdit_adv->clear();
-    for (auto item : selectedWord.noun)
+    textEdit_adv->append("副词：");
+    for (auto item : selectedWord.adv)
     {
         textEdit_adv->append(item);
         textEdit_adv->setAlignment(Qt::AlignCenter);
     }
 
     textEdit_usefulExpressions->clear();
-    for (auto item : selectedWord.noun)
+    textEdit_usefulExpressions->append("常用搭配：");
+    for (auto item : selectedWord.usefulExpressions)
     {
         textEdit_usefulExpressions->append(item);
         textEdit_usefulExpressions->setAlignment(Qt::AlignCenter);
     }
 }
 
-void MainWindow::paintEvent(QPaintEvent* ev)
+void MainWindow::onKeyIPressed() 
 {
+    editModeSetter(true);
+}
+
+void MainWindow::onKeyRPressed()
+{
+    editModeSetter(false);
+}
+
+void MainWindow::onKeyEnterPressed()
+{
+    showSelectedWord();
+}
+
+void MainWindow::onKeyAltEnterPressed()
+{
+    qDebug() << "alt+enter\n";
+}
+
+
+void MainWindow::paintEvent(QPaintEvent* event)
+{
+
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    //如果ReciteMode，nothing
+    //若EditMode，转换到ReciteMode，发出ModeChange信号，进行json保存动作
+}
+
+void MainWindow::onModeChanged(bool isEditMode)
+{
+    label_status->setText(isEditMode ? "Edit" : "Recite");
 
 }

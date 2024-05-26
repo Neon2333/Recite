@@ -1,0 +1,76 @@
+1.类Word
+class Word
+{
+//拼写
+//词性
+//释义
+//常用搭配
+//同义词
+//近义词
+//反义词
+//形近词
+//词性链
+}
+
+2.建表：
+按照Word属性建表
+拼写-词性（词性链的field）
+拼写-释义
+拼写-常用搭配
+拼写-同义词
+拼写-近义词
+拼写-反义词
+拼写-形近词
+拼写-词性链（每条record有：n-v-adj-adv）
+
+3.功能设计：
+显示框：各个属性
+
+左侧导航栏：显示当前单词表的单词50个。上一页，下一页功能，每页50个。
+
+全局切换：左右切换上一个、下一个词在当前单词表50个中切换显示到main的。
+
+Tab切换选中显示框，默认在main框，在main框时，上下按键只在左侧导航栏内选择单词，高亮显示，enter选中词，delete删除词。
+esc回到main,上下按键回到切换左侧导航栏
+
+选中除了main以外的显示框后的上下，在框内选择，enter选中词进入main框，delete进入修改enter确认输入，atl+enter在框框末尾添加单词，enter确认输入。
+
+=======================================================================
+- [OK ] 页码显示改为：1/50。
+- [ ] i进入edit模式，r进入recite模式。
+- [ ] recite模式，
+	enter选中不修改，只显示。 Enter选中第2列元素时。在wordlistall中查找，弹出另一个框显示树状，但只显示选中这个词的所有属性。同样两个模式。
+- [ ] Edit模式下，enter选中进行编辑，alt+enter结束编辑，修改wordlistcurpage。
+	修改第三列时，把修改后的第三列词，修改wordlistall，同时添加到一个hash wordlistallUpdate里（最后遍历找到对应json写入），key是jsonindex。遍历hash修改到对应json里。
+- [ ] 从edit模式切换到recite模式时，调用刷新右侧显示函数，根据当前selected word，重新读取wordlistcurpage进行显示。
+	把修改后的wordlist urpage写入当前json，写入时进度条显示“写入进度”。	
+	把修改后的wordlistall的hash写入当前json，写入时进度条显示“写入进度”。
+- [ ] json元素数小于50，则空word修改过第一列spelling为非空后，在后续添加一个空word，直到把json填充到50个元素。第50个改了非空spelling后，创建新的index.json，并在开头添加个空word。countjson增加1。
+- [ ] 更新curpageIndex后，判断curpageIndex < count，下一页按钮激活。curpageIndex>1时，上一页按钮激活。
+- [ ] 下一页上一页，重新读取json，更新wordlistcurpage。更新selected word，默认第一个，右侧显示刷新。
+- [ ] wordListcurPage更新，要写入json，要刷新显示。wordListcurPageAll更新，也要写入json，也要刷新显示。但是都放到模式切换。
+- [ ] 两个树形，1个显示当前页所有单词，有3列，最后1列显示属性。
+	另1个树形只显示选中的第3列单词所有属性。
+=============================================================
+
+
+
+4. 技术选择：
+
+笔记本模式：
+	记下自己记不住的，或觉得重要的。
+	1个json记录1页50个单词，翻页时读取
+	json便于在不同语言、平台之间传输。
+
+
+单词书模式：
+	连接MySQL server
+	可下载到本地，通过笔记本模式打开。
+
+
+
+扩展功能：
+导出为Excel，Excel导入。
+网络词典获取：
+音标
+发音

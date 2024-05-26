@@ -43,12 +43,18 @@
     <ClCompile Include="JsonOper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GlobalApplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="Word.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="JsonOper.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="GlobalApplication.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

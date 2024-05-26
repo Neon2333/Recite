@@ -89,6 +89,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GlobalApplication.cpp" />
     <ClCompile Include="JsonOper.cpp" />
     <ClCompile Include="Word.cpp" />
     <QtRcc Include="Recite.qrc" />
@@ -101,6 +102,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="JsonOper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="GlobalApplication.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
