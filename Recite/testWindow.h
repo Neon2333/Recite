@@ -2,6 +2,9 @@
 
 #include <QMainWindow>
 #include "ui_testWindow.h"
+#include "CustomTreeWidget.h"
+#include "Word.h"
+#include <QLabel>
 
 class testWindow : public QMainWindow
 {
@@ -10,6 +13,9 @@ class testWindow : public QMainWindow
 public:
 	testWindow(QWidget *parent = nullptr);
 	~testWindow();
+
+	void onSelWordChanged(QString);
+	QLabel* selWord;
 
 private:
 	Ui::testWindowClass ui;

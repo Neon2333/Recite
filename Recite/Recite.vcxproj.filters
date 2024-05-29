@@ -52,6 +52,9 @@
     <ClCompile Include="testWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CustomTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="Word.h">
@@ -69,11 +72,11 @@
     <QtMoc Include="testWindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="CustomTree.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="CustomQTreeWidget.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
     <QtUic Include="CustomTreeWidget.ui">
       <Filter>Form Files</Filter>
     </QtUic>

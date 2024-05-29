@@ -4,6 +4,7 @@
 #include "ui_CustomTreeWidget.h"
 #include "Word.h"
 #include <QTreeWidget>
+#include "CustomTree.h"
 
 /// <summary>
 /// mode1：传入参数&wordListCurrentPage，2列显示
@@ -28,6 +29,8 @@ public:
 
 	void showWWords();
 
+	void onSelectedWordChanged(QString wd);
+
 private:
 	Ui::CustomTreeWidgetClass ui;
 
@@ -35,52 +38,26 @@ private:
 
 	QList<Word>* words;
 
-	//非编辑模式
-	QTreeWidget* rootNotEditable;
+	QString selectedWord;
+	
+	CustomTree* rootNotEditable;	//非编辑模式
+
 	QList< QTreeWidgetItem*> rootChildren;
 
-	//编辑模式
-	QTreeWidget* rootEditable;
+	CustomTree* rootEditable;	//编辑模式
 
 	QList<QTreeWidgetItem*> wordRoots;
-
-	/*QTreeWidgetItem* meanings;
-	QList< QTreeWidgetItem*> meaningsChildren;
-
-	QTreeWidgetItem* partSpeech;
-
-	QTreeWidgetItem* synonyms;
-	QList< QTreeWidgetItem*> synonymsChildren;
-
-	QTreeWidgetItem* anotonyms;
-	QList< QTreeWidgetItem*> anotonymsChildren;
-
-	QTreeWidgetItem* nearSynonyms;
-	QList< QTreeWidgetItem*> nearSynonymsChildren;
-
-	QTreeWidgetItem* similars;
-	QList< QTreeWidgetItem*> similarsChildren;
-
-	QTreeWidgetItem* noun;
-	QList< QTreeWidgetItem*> nounChildren;
-
-	QTreeWidgetItem* verb;
-	QList< QTreeWidgetItem*> verbChildren;
-
-	QTreeWidgetItem* adj;
-	QList< QTreeWidgetItem*> adjChildren;
-
-	QTreeWidgetItem* adv;
-	QList< QTreeWidgetItem*> advChildren;
-
-	QTreeWidgetItem* usefulExpressions;
-	QList< QTreeWidgetItem*> usefulExpressionsChildren;*/
-
 
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void moveEvent(QMoveEvent* event) override;
+	void keyPressEvent(QKeyEvent* event) override;
+
 
 signals:
 	void editableChanged();
+	void selectedWordChanged(QString wd);
+
+public slots:
+
 };

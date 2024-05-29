@@ -1,6 +1,5 @@
 #include "testWindow.h"
-#include "CustomTreeWidget.h"
-#include "Word.h"
+
 
 testWindow::testWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -11,6 +10,13 @@ testWindow::testWindow(QWidget *parent)
 	CustomTreeWidget* aaa = new CustomTreeWidget(this);
 	aaa->setPos(100, 100);
 	aaa->setSize(300, 600);
+    connect(aaa, &CustomTreeWidget::selectedWordChanged, this, &testWindow::onSelWordChanged);
+
+    selWord = new QLabel(this);
+    selWord->resize(100, 50);
+    selWord->move(600, 600);
+    selWord->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+
 
     Word wd;
     wd.pageIndex = 1;
@@ -47,7 +53,14 @@ testWindow::testWindow(QWidget *parent)
     aaa->setWords(list);
     aaa->setEditable(true);
     aaa->showWWords();
+
+
 }
 
 testWindow::~testWindow()
 {}
+
+void testWindow::onSelWordChanged(QString wd)
+{
+    selWord->setText(wd);
+}

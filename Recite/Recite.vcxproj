@@ -89,6 +89,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CustomTree.cpp" />
     <ClCompile Include="CustomTreeWidget.cpp" />
     <ClCompile Include="GlobalApplication.cpp" />
     <ClCompile Include="JsonOper.cpp" />
@@ -109,7 +110,6 @@
     <QtMoc Include="GlobalApplication.h" />
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="CustomQTreeWidget.ui" />
     <QtUic Include="CustomTreeWidget.ui" />
     <QtUic Include="testWindow.ui" />
   </ItemGroup>
@@ -118,6 +118,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="testWindow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="CustomTree.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

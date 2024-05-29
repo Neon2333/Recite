@@ -105,7 +105,6 @@ void MainWindow::connectEvents()
     connect(app, &GlobalApplication::keyEnterPressed, this, &MainWindow::onKeyEnterPressed);
     connect(app, &GlobalApplication::keyCtrlEnterPressed, this, &MainWindow::onKeyCtrlEnterPressed);
 
-
 }
 
 void MainWindow::initMainWindow()

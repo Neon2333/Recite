@@ -8,17 +8,22 @@ CustomTreeWidget::CustomTreeWidget(QWidget *parent)
     editable = false;
 	words = nullptr;
 
-    rootNotEditable = new QTreeWidget(this);
+    rootNotEditable = new CustomTree(this);
+    rootNotEditable->setEditable(false);
     rootNotEditable->setHeaderLabels(QStringList{ "单词表", "联想词" });
     rootNotEditable->setColumnCount(2);
 
-    rootEditable = new QTreeWidget(this);
+    rootEditable = new CustomTree(this);
+    rootEditable->setEditable(true);
     rootEditable->setHeaderLabels(QStringList{ "单词表", "联想词"});
     rootEditable->setColumnCount(2);
     
     rootEditable->stackUnder(rootNotEditable);
     rootNotEditable->setVisible(true);
     rootEditable->setVisible(false);
+
+    connect(rootNotEditable, &CustomTree::selWdChanged, this, &CustomTreeWidget::onSelectedWordChanged);
+    connect(rootEditable, &CustomTree::selWdChanged, this, &CustomTreeWidget::onSelectedWordChanged);
 
     /*wordRoot = nullptr;
     meanings = nullptr;
@@ -53,12 +58,12 @@ void CustomTreeWidget::setPos(int x, int y)
     rootEditable->move(4, 4);
 }
 
-void CustomTreeWidget::setEditable(bool editable)
+void CustomTreeWidget::setEditable(bool e)
 {
-	if (this->editable != editable)
+	if (this->editable != e)
 	{
-		this->editable = editable;
-        if (editable)
+		this->editable = e;
+        if (this->editable)
         {
             rootEditable->setVisible(true);
             rootNotEditable->setVisible(false);
@@ -295,6 +300,21 @@ void CustomTreeWidget::showWWords()
         }
     }
 }
+void CustomTreeWidget::onSelectedWordChanged(QString wd)
+{
+    selectedWord = wd;
+    emit selectedWordChanged(selectedWord);
+}
+//
+//void CustomTreeWidget::setSelectedWord(QString wd)
+//{
+//    if (wd != selectedWord)
+//    {
+//        selectedWord = wd;
+//        
+//        emit selectedWordChanged(selectedWord);
+//    }
+//}
 
 void CustomTreeWidget::resizeEvent(QResizeEvent* event)
 {
@@ -304,4 +324,9 @@ void CustomTreeWidget::resizeEvent(QResizeEvent* event)
 void CustomTreeWidget::moveEvent(QMoveEvent* event)
 {
     QWidget::moveEvent(event);
+}
+
+void CustomTreeWidget::keyPressEvent(QKeyEvent* event)
+{
+
 }
