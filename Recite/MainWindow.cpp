@@ -76,6 +76,7 @@ void MainWindow::init()
     QList<int> configParas = JsonOper::readConfig(configPath);
     curPageIndex = configParas.at(0);
     countWordList = configParas.at(1);
+
     //创建wordlist目录
     QDir wordListDirTemp(wordListDir);
     if (!wordListDirTemp.exists())
@@ -87,7 +88,7 @@ void MainWindow::init()
     readWordListCurrentPage();
 
     //树状显示当前页
-    treeShowCurrentPage();
+    treeShowCurrentPageModeRecite();
 
     //右侧显示选中单词详细
     showSelectedWord();
@@ -101,6 +102,10 @@ void MainWindow::connectEvents()
     connect(this, &MainWindow::modeChanged, this, &MainWindow::onModeChanged);
     connect(app, &GlobalApplication::keyIPressed, this, &MainWindow::onKeyIPressed);
     connect(app, &GlobalApplication::keyRPressed, this, &MainWindow::onKeyRPressed);
+    connect(app, &GlobalApplication::keyEnterPressed, this, &MainWindow::onKeyEnterPressed);
+    connect(app, &GlobalApplication::keyCtrlEnterPressed, this, &MainWindow::onKeyCtrlEnterPressed);
+
+
 }
 
 void MainWindow::initMainWindow()
@@ -259,7 +264,6 @@ void MainWindow::initMainWindow()
     layout_right->addWidget(widget_noun);
     layout_right->addWidget(widget_usefulExpressions);
 
-
     widget_right = new QWidget();
     widget_right->setFixedSize(800, 730);
     widget_right->setLayout(layout_right);
@@ -354,18 +358,18 @@ void MainWindow::initMainWindow()
     this->setCentralWidget(widget_main);
 }
 
-void MainWindow::treeShowCurrentPage()
+void MainWindow::treeShowCurrentPageModeRecite()
 {
     //从wordListCurrentPage读取单词显示
     QList<QString> keys = wordListCurrentPage->keys();
     for (int i = 0; i < keys.count(); i++)
     {
-        addWordToTree(wordListCurrentPage->value(keys.at(i)));
+        addWordToTreeModeRecite(wordListCurrentPage->value(keys.at(i)));
     }
     treeWidget_wordsTree->expandAll();
 }
 
-void MainWindow::addWordToTree(Word wd)
+void MainWindow::addWordToTreeModeRecite(Word wd)
 {
     QTreeWidgetItem* wordRoot = new QTreeWidgetItem();
     wordRoot->setText(0, wd.spelling);
@@ -433,8 +437,21 @@ void MainWindow::addWordToTree(Word wd)
         wordRoot->addChild(tempItem);
     }
     treeWidget_wordsTree->addTopLevelItem(wordRoot);
+}
 
-   /* QTreeWidgetItem* wordspellingItem = new QTreeWidgetItem();
+void MainWindow::treeShowCurrentPageModeEdit()
+{
+    QList<QString> keys = wordListCurrentPage->keys();
+    for (int i = 0; i < keys.count(); i++)
+    {
+        addWordToTreeModeRecite(wordListCurrentPage->value(keys.at(i)));
+    }
+    treeWidget_wordsTree->expandAll();
+}
+
+void MainWindow::addWordToTreeModeEdit(Word wd)
+{
+     QTreeWidgetItem* wordspellingItem = new QTreeWidgetItem();
     wordspellingItem->setText(0, wd.spelling);
 
     QTreeWidgetItem* meaningsItem = new QTreeWidgetItem();
@@ -536,7 +553,7 @@ void MainWindow::addWordToTree(Word wd)
         nounItem, verbItem, adjItem, advItem,
         usefulExpressionsItem});
 
-    treeWidget_wordsTree->addTopLevelItem(wordspellingItem);*/
+    treeWidget_wordsTree->addTopLevelItem(wordspellingItem);
 }
 
 
@@ -598,15 +615,15 @@ void MainWindow::readWordListAll(QString jsonDir)
 
 void MainWindow::readWordListCurrentPage()
 {
-    //若curPageIndex=countWordList=0，第一次打开。则创建1.json，并添加1个空的word。
+    //若curPageIndex=countWordList=0，第一次打开。则创建1.json
     //将curPageIndex=countWordList=1。读取单词表到wordListCurrentPage
     QString curPageJsonPath;
     if (curPageIndex == 0 && countWordList == 0)
     {
         updateConfig(1, countWordList + 1);
         curPageJsonPath = wordListDir + "/" + QString::number(curPageIndex) + ".json";
-        QList<Word> wl{ Word(1,"") };
-        JsonOper::writeWords(wl, curPageJsonPath);
+        //QList<Word> wl{ Word(1,"") };
+        //JsonOper::writeWords(wl, curPageJsonPath);
     }
     //若curPageIndex<=countWordList >0，不是第一次打开。则打开curPageIndex.json文件，读取单词表到wordListCurrentPage。
 
@@ -618,6 +635,7 @@ void MainWindow::readWordListCurrentPage()
     curPageJsonPath = wordListDir + "/" + QString::number(curPageIndex) + ".json";
     QList<Word> wordListCurPageTemp = JsonOper::readWords(curPageJsonPath);
 
+    wordListCurrentPage->clear();
     for (auto wd : wordListCurPageTemp)
     {
         wordListCurrentPage->insert(wd.spelling, wd);
@@ -746,7 +764,7 @@ void MainWindow::onKeyEnterPressed()
     showSelectedWord();
 }
 
-void MainWindow::onKeyAltEnterPressed()
+void MainWindow::onKeyCtrlEnterPressed()
 {
     qDebug() << "alt+enter\n";
 }
@@ -766,5 +784,13 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::onModeChanged(bool isEditMode)
 {
     label_status->setText(isEditMode ? "Edit" : "Recite");
+    if (isEditMode)
+    {
+        treeShowCurrentPageModeRecite();
+    }
+    else
+    {
+        treeShowCurrentPageModeEdit();
+    }
 
 }

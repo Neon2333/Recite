@@ -16,5 +16,5 @@ signals:
 	void keyIPressed();	//i键按下
 	void keyRPressed();	//r键按下
 	void keyEnterPressed();	//enter
-	void keyAltEnterPressed();	//alt+enter
+	void keyCtrlEnterPressed();	//alt+enter
 };

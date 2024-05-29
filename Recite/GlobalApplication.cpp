@@ -34,9 +34,9 @@ bool GlobalApplication::eventFilter(QObject* object, QEvent* event)
             emit keyEnterPressed();
             return true;
         }
-        else if ((key_press->key() == Qt::Key_Alt && key_press->key() == Qt::Key_Enter)&& !key_press->isAutoRepeat())
+        else if ((key_press->key() == Qt::Key_Control && key_press->key() == Qt::Key_Enter)&& !key_press->isAutoRepeat())
         {
-            emit keyAltEnterPressed();
+            emit keyCtrlEnterPressed();
             return true;
         }
 

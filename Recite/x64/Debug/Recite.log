@@ -1,1 +1,4 @@
-﻿
+﻿  moc CustomTreeWidget.h
+  testWindow.cpp
+  moc_CustomTreeWidget.cpp
+  Recite.vcxproj -> E:\WorkSpace\Coding\Recite\x64\Debug\Recite.exe

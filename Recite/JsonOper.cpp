@@ -80,8 +80,6 @@ QList<int> JsonOper::readConfig(QString configPath)
     }
 }
 
-
-
 void JsonOper::writeWords(QList<Word> words, QString jsonPath)
 {
     QJsonArray root;

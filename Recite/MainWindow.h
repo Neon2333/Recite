@@ -112,9 +112,13 @@ private:
 
     void readWordListAll(QString jsonDir);  //程序启动，读取所有单词表（子线程）
 
-    void addWordToTree(Word wd); //添加1个词到树状目录
+    void treeShowCurrentPageModeEdit();   //(Edit)树形显示WordListCurrentPage
 
-    void treeShowCurrentPage();   //树形显示WordListCurrentPage
+    void addWordToTreeModeEdit(Word wd); //(Edit)添加1个词到树状目录
+
+    void treeShowCurrentPageModeRecite();   //(Recite)树形显示WordListCurrentPage
+    
+    void addWordToTreeModeRecite(Word wd); //(Edit)添加1个词到树状目录
     
     Word searchWordListAll(QString spelling);   //从wordListAll中查找词
 
@@ -134,7 +138,7 @@ public slots:
     void onKeyIPressed();
     void onKeyRPressed();
     void onKeyEnterPressed();
-    void onKeyAltEnterPressed();
+    void onKeyCtrlEnterPressed();
 
 protected:
     //void keyPressEvent(QKeyEvent* event) override;
