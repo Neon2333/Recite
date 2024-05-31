@@ -16,6 +16,7 @@ public:
 
 	void onSelWordChanged(QString);
 	QLabel* selWord;
+	Word* wdblank;
 
 private:
 	Ui::testWindowClass ui;

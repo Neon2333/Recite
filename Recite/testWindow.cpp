@@ -1,6 +1,5 @@
 #include "testWindow.h"
 
-
 testWindow::testWindow(QWidget *parent)
 	: QMainWindow(parent)
 {
@@ -15,7 +14,7 @@ testWindow::testWindow(QWidget *parent)
     selWord = new QLabel(this);
     selWord->resize(100, 50);
     selWord->move(600, 600);
-    selWord->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    selWord->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
 
     Word wd;
@@ -47,18 +46,35 @@ testWindow::testWindow(QWidget *parent)
     wd1.adv = QList<QString>{ "person","person" };
     wd1.usefulExpressions = QList<QString>{ "person","hahah","wwww" };
     
+    wdblank = new Word;
+    wdblank->pageIndex = 1;
+    wdblank->spelling = "add";
+    wdblank->meanings = QList<QString>{ "" };
+    wdblank->type = "n";
+    wdblank->synonyms = QList<QString>{ "" };
+    wdblank->nearSynonyms = QList<QString>{ "", };
+    wdblank->antonyms = QList<QString>{ "" };
+    wdblank->similar = QList<QString>{ "" };
+    wdblank->noun = QList<QString>{ "" };
+    wdblank->verb = QList<QString>{ "" };
+    wdblank->adj = QList<QString>{ "" };
+    wdblank->adv = QList<QString>{ "" };
+    wdblank->usefulExpressions = QList<QString>{ "" };
+
     QList<Word>* list = new QList<Word>();
     list->append(wd);
     list->append(wd1);
     aaa->setWords(list);
+    aaa->setWordAddFillItemTop(wdblank);
+    aaa->setWordAddFillItemBottom(wdblank);
     aaa->setEditable(true);
     aaa->showWWords();
-
-
 }
 
 testWindow::~testWindow()
-{}
+{
+    delete wdblank;
+}
 
 void testWindow::onSelWordChanged(QString wd)
 {

@@ -115,7 +115,7 @@ void MainWindow::initMainWindow()
     label_spelling->setText("annynomous");  //不能放在字体、Alignment等后面，否则设置不了
     label_spelling->setAlignment(Qt::AlignCenter);
     label_spelling->setFont(QFont("微软雅黑", 30));
-    label_spelling->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    label_spelling->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     textEdit_meanings = new QTextEdit();
     textEdit_meanings->setFixedSize(300, 200);
