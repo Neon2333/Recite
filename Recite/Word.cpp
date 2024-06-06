@@ -2,10 +2,15 @@
 
 Word::Word(QObject *parent)
 	: QObject(parent)
-{}
+{
+	this->pageIndex = 0;
+	this->spelling = "NaN";
+}
 
 Word::Word()
 {
+	this->pageIndex = 0;
+	this->spelling = "NaN";
 }
 
 Word::Word(const Word& another)

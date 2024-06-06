@@ -6,10 +6,15 @@ CustomTree::CustomTree(QWidget *parent)
 {
     editable = false;
     selColumn = 0;
-    itemAddToTopLevel = nullptr;
-    itemAddToBottomLevel = nullptr;
+    itemAddToTopLevel = new QTreeWidgetItem();
+    itemAddToBottomLevel = new QTreeWidgetItem();
 
-    connect(this, &QTreeWidget::itemChanged, this, &onItemModified);
+    addButNotModified = false;
+    spellingBeforeModified = "";
+    topSpellingOfModifiedItem = "";
+    categoryOfModifiedItem = "";
+
+    connect(this, &QTreeWidget::itemChanged, this, &CustomTree::onItemModified);
 
 }
 
@@ -27,7 +32,12 @@ bool CustomTree::getEditable()
     return editable;
 }
 
-void CustomTree::setWords(QHash<QString, Word>* wds)
+void CustomTree::setCurPageIndex(int pageIndex)
+{
+    this->curPageIndex = pageIndex;
+}
+
+void CustomTree::setWords(QList<QHash<QString, Word>>* wds)
 {
     if (wds == nullptr)
         return;
@@ -36,11 +46,12 @@ void CustomTree::setWords(QHash<QString, Word>* wds)
 
 void CustomTree::removeItemRecursion(QTreeWidgetItem* selItem)
 {
+    QHash<QString, Word>& curPageWords = (*words)[curPageIndex];
+    
     int count = selItem->childCount();
     if (count == 0) {
         // 没有子节点，直接删除
-        emit wordDeleted();
-        auto iter = words->find(selItem->parent()->parent()->text(0));
+        auto iter = curPageWords.find(selItem->parent()->parent()->text(0));
         QString category = selItem->parent()->text(0);
         wordDel(iter, category, selItem->text(1));
         delete selItem;
@@ -50,31 +61,42 @@ void CustomTree::removeItemRecursion(QTreeWidgetItem* selItem)
         QTreeWidgetItem* childItem = selItem->child(0); // 删除子节点
         removeItemRecursion(childItem);
     }
-    emit wordDeleted();
-    words->remove(selItem->text(0));
+    curPageWords.remove(selItem->text(0));
     delete selItem; // 最后将自己删除
 }
 
 void CustomTree::addItem(QTreeWidgetItem* selItem)
 {
+    QHash<QString, Word>& curPageWords = (*words)[curPageIndex];
+
     if (selItem->parent() == nullptr)
     {
+        if (addButNotModified)
+        {
+            return;
+        }
         this->addTopLevelItem(itemAddToTopLevel);
-        emit wordAdded(true, selItem->text(0), nullptr);
         setItemSelected(itemAddToTopLevel, true);
-        words->insert(wordAddToTopLevel->spelling, wordAddToTopLevel);
+        if (curPageWords.count() <= 60)
+        {
+            curPageWords.insert(wordAddToTopLevel->spelling, wordAddToTopLevel);
+        }
+        else
+        {
+            //add a json
+            //countWordList++
+        }
+
     }
     else if (selItem->childCount() == 0)
     {
         selItem->parent()->addChild(itemAddToBottomLevel);
         setItemSelected(itemAddToBottomLevel, true);
-        auto iter = words->find(selItem->parent()->parent()->text(0));
+        auto iter = curPageWords.find(selItem->parent()->parent()->text(0));
         QString category = selItem->parent()->text(0);
         wordAdd(iter, category, wordAddToBottomLevel->spelling);
-        emit  wordAdded(false, selItem->parent()->parent()->text(0), selItem->parent()->text(0));
     }
 }
-
 
 void CustomTree::setAddItemTopLevel(Word* wd)
 {
@@ -217,133 +239,133 @@ void CustomTree::createItemBottomFromWord(QTreeWidgetItem* wordRoot, Word* wd)
     wordRoot->setText(1, wd->spelling);
 }
 
-void CustomTree::wordAdd(QHash<QString,Word>::iterator iter, QString category, QString item)
+void CustomTree::wordAdd(QHash<QString,Word>::iterator& iter, QString category, QString item)
 {
-    if (category == "meanings")
+    if (category == "释义")
     {
         iter->meanings.append(item);
     }
-    else if (category == "synonyms")
+    else if (category == "同义词")
     {
         iter->synonyms.append(item);
     }
-    else if (category == "antonyms")
+    else if (category == "反义词")
     {
         iter->antonyms.append(item);
     }
-    else if (category == "nearSynonyms")
+    else if (category == "近义词")
     {
         iter->nearSynonyms.append(item);
     }
-    else if (category == "similar")
+    else if (category == "形近词")
     {
         iter->similar.append(item);
     }
-    else if (category == "noun")
+    else if (category == "名词")
     {
         iter->noun.append(item);
     }
-    else if (category == "verb")
+    else if (category == "动词")
     {
         iter->verb.append(item);
     }
-    else if (category == "adj")
+    else if (category == "形容词")
     {
         iter->adj.append(item);
     }
-    else if (category == "adv")
+    else if (category == "副词")
     {
         iter->adv.append(item);
     }
-    else if (category == "usefulExpressions")
+    else if (category == "常用搭配")
     {
         iter->usefulExpressions.append(item);
     }
 }
 
-void CustomTree::wordDel(QHash<QString, Word>::iterator iter, QString category, QString item)
+void CustomTree::wordDel(QHash<QString, Word>::iterator& iter, QString category, QString item)
 {
-    if (category == "meanings")
+    if (category == "释义")
     {
         iter->meanings.removeOne(item);
     }
-    else if (category == "synonyms")
+    else if (category == "同义词")
     {
         iter->synonyms.removeOne(item);
     }
-    else if (category == "antonyms")
+    else if (category == "反义词")
     {
         iter->antonyms.removeOne(item);
     }
-    else if (category == "nearSynonyms")
+    else if (category == "近义词")
     {
         iter->nearSynonyms.removeOne(item);
     }
-    else if (category == "similar")
+    else if (category == "形近词")
     {
         iter->similar.removeOne(item);
     }
-    else if (category == "noun")
+    else if (category == "名词")
     {
         iter->noun.removeOne(item);
     }
-    else if (category == "verb")
+    else if (category == "动词")
     {
         iter->verb.removeOne(item);
     }
-    else if (category == "adj")
+    else if (category == "形容词")
     {
         iter->adj.removeOne(item);
     }
-    else if (category == "adv")
+    else if (category == "副词")
     {
         iter->adv.removeOne(item);
     }
-    else if (category == "usefulExpressions")
+    else if (category == "常用搭配")
     {
         iter->usefulExpressions.removeOne(item);
     }
 }
 
-void CustomTree::wordModify(QHash<QString, Word>::iterator iter, QString category, QString item)
+void CustomTree::wordModify(QHash<QString, Word>::iterator& iter, QString category, QString item)
 {
-    if (category == "meanings")
+    if (category == "释义")
     {
         iter->meanings.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "synonyms")
+    else if (category == "同义词")
     {
         iter->synonyms.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "antonyms")
+    else if (category == "反义词")
     {
         iter->antonyms.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "nearSynonyms")
+    else if (category == "近义词")
     {
         iter->nearSynonyms.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "similar")
+    else if (category == "形近词")
     {
         iter->similar.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "noun")
+    else if (category == "名词")
     {
         iter->noun.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "verb")
+    else if (category == "动词")
     {
         iter->verb.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "adj")
+    else if (category == "形容词")
     {
         iter->adj.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "adv")
+    else if (category == "副词")
     {
         iter->adv.replace(iter->meanings.indexOf(item), item);
     }
-    else if (category == "usefulExpressions")
+    else if (category == "常用搭配")
     {
         iter->usefulExpressions.replace(iter->meanings.indexOf(item), item);
     }
@@ -491,7 +513,8 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
             if (selItems.at(0))
             {
                 scrollToItem(selItems.at(0));
-                emit selWordChanged(selItems.at(0)->text(selColumn));
+                Word selWord = (*words)[curPageIndex][selItems.at(0)->text(selColumn)];
+                emit selWordChanged(selWord);
             }
         }
     }
@@ -499,6 +522,8 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
     //增加
     else if(editable && event->key()==Qt::Key_A && !event->isAutoRepeat())
     {
+        if(!editable)   return;
+            
         keyDPressCount = 0;  //清空按键残留
         keyWPressCount = 0;
         keyAPressCount++;
@@ -518,6 +543,8 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
     //删除(dd)
     else if (editable && event->key() == Qt::Key_D && !event->isAutoRepeat()) 
     {
+        if (!editable)   return;
+
         keyAPressCount = 0;
         keyWPressCount = 0;
         keyDPressCount++;
@@ -540,6 +567,8 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
     //修改（ww)
     else if (event->key() == Qt::Key_W && !event->isAutoRepeat())    
     {
+        if (!editable)   return;
+
         keyAPressCount = 0;
         keyDPressCount = 0;
         keyWPressCount++;
@@ -555,6 +584,16 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
             {
                 selItems.at(0)->setFlags(selItems.at(0)->flags() | Qt::ItemIsEditable);
                 selItems.at(0)->setSelected(true);
+                if (selItems.at(0)->parent() == nullptr)
+                {
+                    spellingBeforeModified = selItems.at(0)->text(0);
+                }
+                else if (selItems.at(0)->childCount() == 0)
+                {
+                    topSpellingOfModifiedItem = selItems.at(0)->parent()->parent()->text(0);
+                    categoryOfModifiedItem = selItems.at(0)->parent()->text(0);
+                    spellingBeforeModified = selItems.at(0)->text(1);
+                }
                 editItem(selItems.at(0), selColumn);
                 keyWPressCount = 0;
             }
@@ -572,7 +611,11 @@ void CustomTree::onItemModified(QTreeWidgetItem* item, int col)
 {
     if (item->parent() == nullptr)
     {
-        auto iter = words->find(item->text(0));
-
+        (*words)[curPageIndex][spellingBeforeModified].spelling = item->text(col);
+    }
+    else if (item->childCount() == 0)
+    {
+        auto iter = (*words)[curPageIndex].find(topSpellingOfModifiedItem);
+        wordModify(iter, categoryOfModifiedItem, spellingBeforeModified);
     }
 }

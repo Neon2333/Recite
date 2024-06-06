@@ -3,8 +3,6 @@
 MainWindow::MainWindow(GlobalApplication* a, QWidget* parent)
     :app(a), QMainWindow(parent)
 {
-    wordListCurrentPage = new QHash<QString, Word>();
-    wordListAll = new QHash<QString, Word>();
 
     init();
 }
@@ -16,8 +14,6 @@ MainWindow::~MainWindow()
 
     //释放资源
     delete wordListAll;
-    delete wordListCurrentPage;
-
 }
 
 void MainWindow::editModeSetter(bool isEditMode)
@@ -37,7 +33,7 @@ void MainWindow::init()
     //关联事件handler
     connectEvents();    
 
-#if 1
+#if 0
     Word wd;
     wd.pageIndex = 1;
     wd.spelling = "person";
@@ -52,7 +48,7 @@ void MainWindow::init()
     wd.adj = QList<QString>{ "person","person" };
     wd.adv = QList<QString>{ "person","person" };
     wd.usefulExpressions = QList<QString>{ "person","hahah","wwww" };
-    wordListCurrentPage->insert("person", wd);
+    wordListCurrentPage.insert("person", wd);
     Word wd1;
     wd1.pageIndex = 1;
     wd1.spelling = "person";
@@ -67,7 +63,7 @@ void MainWindow::init()
     wd1.adj = QList<QString>{ "person","person" };
     wd1.adv = QList<QString>{ "person","person" };
     wd1.usefulExpressions = QList<QString>{ "person","hahah","wwww" };
-    wordListCurrentPage->insert("person", wd1);
+    wordListCurrentPage.insert("person", wd1);
     selectedWord = wd1;
 
 #endif
@@ -84,17 +80,34 @@ void MainWindow::init()
         wordListDirTemp.mkdir(wordListDir);
     }
 
-    //读取当前页单词表
-    readWordListCurrentPage();
+    wordListAll = new QList<QHash<QString, Word>>();
+    //子线程读取所有单词表，进度条显示
+    readWordListAll(wordListDir);
 
-    //树状显示当前页
-    treeShowCurrentPageModeRecite();
+    wordsTree->setWords(wordListAll);
+
+    wordsTree->showWords();
+
+    Word wd;
+    wd.pageIndex = 1;
+    wd.spelling = "NaN";
+    wd.meanings = QList<QString>{ "NaN" };
+    wd.type = "n";
+    wd.synonyms = QList<QString>{ "NaN" };
+    wd.nearSynonyms = QList<QString>{ "NaN"};
+    wd.antonyms = QList<QString>{ "NaN"};
+    wd.similar = QList<QString>{ "NaN" };
+    wd.noun = QList<QString>{ "NaN" };
+    wd.verb = QList<QString>{ "NaN" };
+    wd.adj = QList<QString>{ "NaN" };
+    wd.adv = QList<QString>{ "NaN" };
+    wd.usefulExpressions = QList<QString>{ "NaN" };
+    wordsTree->setWordAddFillItemTop(&wd);
+    wordsTree->setWordAddFillItemBottom(&wd);
 
     //右侧显示选中单词详细
     showSelectedWord();
-
-    //子线程读取所有单词表，进度条显示
-    readWordListAll(wordListDir);
+        
 }
 
 void MainWindow::connectEvents()
@@ -102,9 +115,7 @@ void MainWindow::connectEvents()
     connect(this, &MainWindow::modeChanged, this, &MainWindow::onModeChanged);
     connect(app, &GlobalApplication::keyIPressed, this, &MainWindow::onKeyIPressed);
     connect(app, &GlobalApplication::keyRPressed, this, &MainWindow::onKeyRPressed);
-    connect(app, &GlobalApplication::keyEnterPressed, this, &MainWindow::onKeyEnterPressed);
-    connect(app, &GlobalApplication::keyCtrlEnterPressed, this, &MainWindow::onKeyCtrlEnterPressed);
-
+    connect(wordsTree, &CustomTreeWidget::selectedWordChanged, this, &MainWindow::onSelectedWordChanged);
 }
 
 void MainWindow::initMainWindow()
@@ -123,14 +134,14 @@ void MainWindow::initMainWindow()
     textEdit_meanings->append("人类");
     textEdit_meanings->setFont(QFont("微软雅黑", 15));
     textEdit_meanings->setAlignment(Qt::AlignCenter);
-    textEdit_meanings->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_meanings->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     label_partOfSpeech = new QLabel(this);
     label_partOfSpeech->setFixedSize(100, 200);
     label_partOfSpeech->setText("n");
     label_partOfSpeech->setFont(QFont("微软雅黑", 15));
     label_partOfSpeech->setAlignment(Qt::AlignCenter);
-    label_partOfSpeech->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    label_partOfSpeech->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     layout_rightLine1 = new QHBoxLayout();
     layout_rightLine1->setMargin(5);
@@ -151,7 +162,7 @@ void MainWindow::initMainWindow()
     textEdit_synonyms->setFont(QFont("微软雅黑", 10));
     textEdit_synonyms->setAlignment(Qt::AlignCenter);
     textEdit_synonyms->append("distinguish");
-    // textEdit_synonyms->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_synonyms->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     textEdit_nearSynonyms = new QTextEdit(this);
     textEdit_nearSynonyms->setFixedSize(185, 200);
@@ -159,7 +170,7 @@ void MainWindow::initMainWindow()
     textEdit_nearSynonyms->append("近义词");
     textEdit_nearSynonyms->setFont(QFont("微软雅黑", 10));
     textEdit_nearSynonyms->setAlignment(Qt::AlignCenter);
-    // textEdit_nearSynonyms->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_nearSynonyms->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     textEdit_antonym = new QTextEdit(this);
     textEdit_antonym->setFixedSize(185, 200);
@@ -167,7 +178,7 @@ void MainWindow::initMainWindow()
     textEdit_antonym->append("反义词");
     textEdit_antonym->setFont(QFont("微软雅黑", 10));
     textEdit_antonym->setAlignment(Qt::AlignCenter);
-    // textEdit_antonym->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_antonym->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     textEdit_similar = new QTextEdit(this);
     textEdit_similar->setFixedSize(185, 200);
@@ -175,7 +186,7 @@ void MainWindow::initMainWindow()
     textEdit_similar->append("形近词");
     textEdit_similar->setFont(QFont("微软雅黑", 10));
     textEdit_similar->setAlignment(Qt::AlignCenter);
-    // textEdit_similar->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_similar->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     layout_rightLine2 = new QHBoxLayout();
     layout_rightLine2->setMargin(5);
@@ -197,7 +208,7 @@ void MainWindow::initMainWindow()
     textEdit_noun->setText("n");
     textEdit_noun->setFont(QFont("微软雅黑", 10));
     textEdit_noun->setAlignment(Qt::AlignCenter);
-    // textEdit_noun->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_noun->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     textEdit_verb = new QTextEdit(this);
     textEdit_verb->setFixedSize(185, 80);
@@ -205,7 +216,7 @@ void MainWindow::initMainWindow()
     textEdit_verb->setText("v");
     textEdit_verb->setFont(QFont("微软雅黑", 10));
     textEdit_verb->setAlignment(Qt::AlignCenter);
-    // textEdit_verb->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_verb->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     textEdit_adj = new QTextEdit(this);
     textEdit_adj->setFixedSize(185, 80);
@@ -213,7 +224,7 @@ void MainWindow::initMainWindow()
     textEdit_adj->setText("adj");
     textEdit_adj->setFont(QFont("微软雅黑", 10));
     textEdit_adj->setAlignment(Qt::AlignCenter);
-    // textEdit_adj->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_adj->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     textEdit_adv = new QTextEdit(this);
     textEdit_adv->setFixedSize(185, 80);
@@ -221,7 +232,7 @@ void MainWindow::initMainWindow()
     textEdit_adv->setText("adv");
     textEdit_adv->setFont(QFont("微软雅黑", 10));
     textEdit_adv->setAlignment(Qt::AlignCenter);
-    // textEdit_adv->setStyleSheet("background-color:rgb(0,0,0);color:rgb(255,255,255)");
+    textEdit_adv->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     layout_rightLine3 = new QHBoxLayout();
     layout_rightLine3->setMargin(5);
@@ -243,6 +254,7 @@ void MainWindow::initMainWindow()
     textEdit_usefulExpressions->setText("常用搭配");
     textEdit_usefulExpressions->setFont(QFont("微软雅黑", 10));
     textEdit_usefulExpressions->setAlignment(Qt::AlignCenter);
+    textEdit_usefulExpressions->setStyleSheet("background-color:rgb(99,107,118);color:rgb(255,255,255)");
 
     layout_rightLine4 = new QHBoxLayout();
     layout_rightLine4->setMargin(5);
@@ -268,16 +280,13 @@ void MainWindow::initMainWindow()
     widget_right->setLayout(layout_right);
 
     //左侧整体
-    treeWidget_wordsTree = new QTreeWidget(this);
-    model = new QStandardItemModel();
-    treeWidget_wordsTree->setFixedSize(400, 630);
-    treeWidget_wordsTree->setHeaderLabels(QStringList{ "单词表","联想词" });
-    treeWidget_wordsTree->setColumnCount(2);
+    wordsTree = new CustomTreeWidget(this);
+    wordsTree->setSize(400, 630);
 
     layout_leftLine1 = new QHBoxLayout();
     layout_leftLine1->setMargin(5);
     layout_leftLine1->setSpacing(5);
-    layout_leftLine1->addWidget(treeWidget_wordsTree);
+    layout_leftLine1->addWidget(wordsTree);
     widget_leftLine1 = new QWidget();
     widget_leftLine1->setFixedSize(400, 630);
     widget_leftLine1->setLayout(layout_leftLine1);
@@ -357,210 +366,8 @@ void MainWindow::initMainWindow()
     this->setCentralWidget(widget_main);
 }
 
-void MainWindow::treeShowCurrentPageModeRecite()
-{
-    //从wordListCurrentPage读取单词显示
-    QList<QString> keys = wordListCurrentPage->keys();
-    for (int i = 0; i < keys.count(); i++)
-    {
-        addWordToTreeModeRecite(wordListCurrentPage->value(keys.at(i)));
-    }
-    treeWidget_wordsTree->expandAll();
-}
-
-void MainWindow::addWordToTreeModeRecite(Word wd)
-{
-    QTreeWidgetItem* wordRoot = new QTreeWidgetItem();
-    wordRoot->setText(0, wd.spelling);
-    for (auto item : wd.meanings)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    QTreeWidgetItem* wordTypeItem = new QTreeWidgetItem();
-    wordTypeItem->setText(1, wd.type);
-    wordRoot->addChild(wordTypeItem);
-    for (auto item : wd.synonyms)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    for (auto item : wd.antonyms)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    for (auto item : wd.nearSynonyms)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    for (auto item : wd.similar)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    for (auto item : wd.noun)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    for (auto item : wd.verb)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    for (auto item : wd.adj)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    for (auto item : wd.adv)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    for (auto item : wd.usefulExpressions)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(1, item);
-        wordRoot->addChild(tempItem);
-    }
-    treeWidget_wordsTree->addTopLevelItem(wordRoot);
-}
-
-void MainWindow::treeShowCurrentPageModeEdit()
-{
-    QList<QString> keys = wordListCurrentPage->keys();
-    for (int i = 0; i < keys.count(); i++)
-    {
-        addWordToTreeModeRecite(wordListCurrentPage->value(keys.at(i)));
-    }
-    treeWidget_wordsTree->expandAll();
-}
-
-void MainWindow::addWordToTreeModeEdit(Word wd)
-{
-     QTreeWidgetItem* wordspellingItem = new QTreeWidgetItem();
-    wordspellingItem->setText(0, wd.spelling);
-
-    QTreeWidgetItem* meaningsItem = new QTreeWidgetItem();
-    meaningsItem->setText(1, "释义");
-    for (auto item : wd.meanings)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        meaningsItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* partSpeechItem = new QTreeWidgetItem();
-    partSpeechItem->setText(1, wd.type);
-
-
-    QTreeWidgetItem* synonymsItem = new QTreeWidgetItem();
-    synonymsItem->setText(1, "同义词");
-    for (auto item : wd.synonyms)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        synonymsItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* anotonymsItem = new QTreeWidgetItem();
-    anotonymsItem->setText(1, "反义词");
-    for (auto item : wd.antonyms)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        anotonymsItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* nearSynonymsItem = new QTreeWidgetItem();
-    nearSynonymsItem->setText(1, "近义词");
-    for (auto item : wd.nearSynonyms)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        nearSynonymsItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* similarsItem = new QTreeWidgetItem();
-    similarsItem->setText(1, "形近词");
-    for (auto item : wd.similar)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        similarsItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* nounItem = new QTreeWidgetItem();
-    nounItem->setText(1, "名词");
-    for (auto item : wd.noun)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        nounItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* verbItem = new QTreeWidgetItem();
-    verbItem->setText(1, "动词");
-    for (auto item : wd.verb)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        verbItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* adjItem = new QTreeWidgetItem();
-    adjItem->setText(1, "形容词");
-    for (auto item : wd.adj)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        adjItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* advItem = new QTreeWidgetItem();
-    advItem->setText(1, "副词");
-    for (auto item : wd.adv)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        advItem->addChild(tempItem);
-    }
-
-    QTreeWidgetItem* usefulExpressionsItem = new QTreeWidgetItem();
-    usefulExpressionsItem->setText(1, "常用搭配");
-    for (auto item : wd.usefulExpressions)
-    {
-        QTreeWidgetItem* tempItem = new QTreeWidgetItem();
-        tempItem->setText(2, item);
-        usefulExpressionsItem->addChild(tempItem);
-    }
-
-    wordspellingItem->addChildren(QList<QTreeWidgetItem*>{meaningsItem, partSpeechItem,
-        synonymsItem, anotonymsItem, nearSynonymsItem, similarsItem,
-        nounItem, verbItem, adjItem, advItem,
-        usefulExpressionsItem});
-
-    treeWidget_wordsTree->addTopLevelItem(wordspellingItem);
-}
-
-
 void MainWindow::readWordListAll(QString jsonDir)
 {
-    //不存在，则创建空的0.json
-    //否则，遍历读取到wordListAll
-
     QDir dir(jsonDir);
     if (!dir.exists())
     {
@@ -568,77 +375,71 @@ void MainWindow::readWordListAll(QString jsonDir)
 
     }
 
-    QFileInfoList fileInfoList = dir.entryInfoList();
-    for (auto item : fileInfoList)
-    {
-        if (!item.isFile() || item.suffix().toLower() != "json")
-        {
-            continue;
-        }
-
-        QString jsonPath = item.absoluteFilePath();
-        QFile jsonFile(jsonPath);
-        if (!jsonFile.open(QFile::ReadOnly))
-        {
-            return;
-        }
-        QByteArray jsonArr = jsonFile.readAll();
-        jsonFile.close();
-        QJsonDocument doc = QJsonDocument::fromJson(jsonArr);
-        if (!doc.isArray())
-        {
-            return;
-        }
-
-        QJsonObject obj = doc.object();
-        QStringList keys = obj.keys();
-
-        for (int i = 0; i < keys.count(); i++)
-        {
-            QString key = keys.at(i);
-            QJsonValue value = obj.value(key);
-
-            if (!value.isObject())
-            {
-                continue;
-            }
-            QJsonObject obj = value.toObject();
-            Word wd = JsonOper::readWord(obj);
-            wordListAll->insert(wd.spelling, wd);
-        }
-        
-        //加个进度计算
-        
-    }
-}
-
-void MainWindow::readWordListCurrentPage()
-{
-    //若curPageIndex=countWordList=0，第一次打开。则创建1.json
-    //将curPageIndex=countWordList=1。读取单词表到wordListCurrentPage
-    QString curPageJsonPath;
-    if (curPageIndex == 0 && countWordList == 0)
-    {
-        updateConfig(1, countWordList + 1);
-        curPageJsonPath = wordListDir + "/" + QString::number(curPageIndex) + ".json";
-        //QList<Word> wl{ Word(1,"") };
-        //JsonOper::writeWords(wl, curPageJsonPath);
-    }
-    //若curPageIndex<=countWordList >0，不是第一次打开。则打开curPageIndex.json文件，读取单词表到wordListCurrentPage。
-
     if (curPageIndex > countWordList || curPageIndex < 0 || countWordList < 0)
     {
         return;
     }
 
-    curPageJsonPath = wordListDir + "/" + QString::number(curPageIndex) + ".json";
-    QList<Word> wordListCurPageTemp = JsonOper::readWords(curPageJsonPath);
-
-    wordListCurrentPage->clear();
-    for (auto wd : wordListCurPageTemp)
+    //若curPageIndex=countWordList=0，第一次打开。则创建1.json
+    ////将curPageIndex=countWordList=1。读取单词表到wordListCurrentPage
+    if (curPageIndex == 0 && countWordList == 0)
     {
-        wordListCurrentPage->insert(wd.spelling, wd);
+        updateConfig(++curPageIndex, ++countWordList);
     }
+
+    QString curPageJsonPath;
+    //遍历所有页，添加到wordListAll
+    for (int i = 1; i <= countWordList; i++)
+    {
+        curPageJsonPath = wordListDir + "/" + QString::number(i) + ".json";
+        JsonOper::readWords(&wordListCurrentPage, curPageJsonPath);
+        wordListAll->append(wordListCurrentPage);
+        probar->setValue(i / countWordList);    //进度条
+    }
+    wordListCurrentPage = (*wordListAll)[curPageIndex - 1];
+    label_curPage->setText(QString::number(curPageIndex) + "/" + QString::number(countWordList));
+
+    ////将当前页添加到wordListCurrentPage
+    //wordListCurrentPage = (*wordListAll)[curPageIndex];
+
+    //QFileInfoList fileInfoList = dir.entryInfoList();
+    //for (auto item : fileInfoList)
+    //{
+    //    if (!item.isFile() || item.suffix().toLower() != "json")
+    //    {
+    //        continue;
+    //    }
+
+    //    QString jsonPath = item.absoluteFilePath();
+    //    QFile jsonFile(jsonPath);
+    //    if (!jsonFile.open(QFile::ReadOnly))
+    //    {
+    //        return;
+    //    }
+    //    QByteArray jsonArr = jsonFile.readAll();
+    //    jsonFile.close();
+    //    QJsonDocument doc = QJsonDocument::fromJson(jsonArr);
+    //    if (!doc.isArray())
+    //    {
+    //        return;
+    //    }
+
+    //    QJsonObject obj = doc.object();
+    //    QStringList keys = obj.keys();
+
+    //    for (int i = 0; i < keys.count(); i++)
+    //    {
+    //        QString key = keys.at(i);
+    //        QJsonValue value = obj.value(key);
+
+    //        if (!value.isObject())
+    //        {
+    //            continue;
+    //        }
+    //        QJsonObject obj = value.toObject();
+    //        Word wd = JsonOper::readWord(obj);
+    //    }
+    //}
 }
 
 void MainWindow::updateConfig(int curPage, int countWord)
@@ -646,19 +447,6 @@ void MainWindow::updateConfig(int curPage, int countWord)
     curPageIndex = curPage;
     countWordList = countWord;
     JsonOper::writeConfig(configPath, curPageIndex, countWordList);
-}
-
-
-
-
-void MainWindow::expandWord(Word wd)
-{
-
-}
-
-void MainWindow::collapaseWord(Word wd)
-{
-
 }
 
 void MainWindow::showSelectedWord()
@@ -708,7 +496,7 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_noun->clear();
-    textEdit_noun->append("名词：");
+    textEdit_noun->append("n：");
     for (auto item : selectedWord.noun)
     {
         textEdit_noun->append(item);
@@ -716,7 +504,7 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_verb->clear();
-    textEdit_verb->append("动词：");
+    textEdit_verb->append("v：");
     for (auto item : selectedWord.verb)
     {
         textEdit_verb->append(item);
@@ -724,7 +512,7 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_adj->clear();
-    textEdit_adj->append("形容词：");
+    textEdit_adj->append("adj：");
     for (auto item : selectedWord.adj)
     {
         textEdit_adj->append(item);
@@ -732,7 +520,7 @@ void MainWindow::showSelectedWord()
     }
 
     textEdit_adv->clear();
-    textEdit_adv->append("副词：");
+    textEdit_adv->append("adv：");
     for (auto item : selectedWord.adv)
     {
         textEdit_adv->append(item);
@@ -758,16 +546,11 @@ void MainWindow::onKeyRPressed()
     editModeSetter(false);
 }
 
-void MainWindow::onKeyEnterPressed()
+void MainWindow::onSelectedWordChanged(Word wd)
 {
+    this->selectedWord = wd;
     showSelectedWord();
 }
-
-void MainWindow::onKeyCtrlEnterPressed()
-{
-    qDebug() << "alt+enter\n";
-}
-
 
 void MainWindow::paintEvent(QPaintEvent* event)
 {
@@ -776,8 +559,7 @@ void MainWindow::paintEvent(QPaintEvent* event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    //如果ReciteMode，nothing
-    //若EditMode，转换到ReciteMode，发出ModeChange信号，进行json保存动作
+    //进行json保存
 }
 
 void MainWindow::onModeChanged(bool isEditMode)
@@ -785,11 +567,11 @@ void MainWindow::onModeChanged(bool isEditMode)
     label_status->setText(isEditMode ? "Edit" : "Recite");
     if (isEditMode)
     {
-        treeShowCurrentPageModeRecite();
+        wordsTree->setEditable(true);
     }
     else
     {
-        treeShowCurrentPageModeEdit();
+        wordsTree->setEditable(false);
     }
 
 }

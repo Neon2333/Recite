@@ -19,7 +19,9 @@ public:
 
 	bool getEditable();
 
-	void setWords(QHash<QString, Word>* wds);
+	void setCurPageIndex(int pageIndex);
+
+	void setWords(QList<QHash<QString, Word>>* wds);
 
 	void removeItemRecursion(QTreeWidgetItem* selItem);
 	
@@ -34,7 +36,10 @@ private:
 
 	bool editable;
 
-	QHash<QString, Word>* words;
+	int curPageIndex = 0;
+
+	//QHash<QString, Word>* words;
+	QList<QHash<QString, Word>>* words;
 
 	int selColumn;	
 
@@ -50,20 +55,19 @@ private:
 
 	void createItemBottomFromWord(QTreeWidgetItem* wordRoot, Word* wd);
 
-	const QMetaObject* metaObject;
-
-	void wordAdd(QHash<QString, Word>::iterator iter, QString category, QString item);
-	void wordDel(QHash<QString, Word>::iterator iter, QString category, QString item);
-	void wordModify(QHash<QString, Word>::iterator iter, QString category, QString item);
+	bool addButNotModified;
+	void wordAdd(QHash<QString, Word>::iterator& iter, QString category, QString item);
+	void wordDel(QHash<QString, Word>::iterator& iter, QString category, QString item);
+	QString spellingBeforeModified;
+	QString topSpellingOfModifiedItem;
+	QString categoryOfModifiedItem;
+	void wordModify(QHash<QString, Word>::iterator& iter, QString category, QString item);
 
 protected:
 	virtual void keyPressEvent(QKeyEvent* event) override;
 	
 signals:
-	void selWordChanged(QString wd);
-	void wordAdded(bool isTopItem, QString wd, QString category);	
-	void wordDeleted();
-	void wordModified();
+	void selWordChanged(Word wd);
 
 private slots:
 	void onItemModified(QTreeWidgetItem* item, int col);

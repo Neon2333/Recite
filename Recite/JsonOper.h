@@ -22,7 +22,7 @@ public:
 
     static void writeConfig(QString configPath, int curPageIndex, int countWordList);         //将index写入config.json
 
-    static void writeWords(QList<Word> words, QString jsonPath);    //清空当前json并写入
+    static void writeWords(QHash<QString,Word>* words, QString jsonPath);    //清空当前json并写入
 
     static void insertWord(Word w, int index, QString jsonPath);    //把word添加到数组index位置
 
@@ -30,7 +30,7 @@ public:
 
     static void updateWord(QString spelling, Word w, QString jsonPath);   //修改json文件某个word的属性
 
-    static QList<Word> readWords(QString jsonPath);  //读取json返回word列表
+    static bool readWords(QHash<QString,Word>* words, QString jsonPath);  //读取json返回word列表
 
     static Word readWord(QJsonObject obj);  //从QJsonObject构建1个word
 

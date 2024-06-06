@@ -5,20 +5,23 @@ CustomTreeWidget::CustomTreeWidget(QWidget *parent)
 {
 	ui.setupUi(this);
 
-    editable = false;
 	words = nullptr;
+    editable = false;
+    curPageIndex = 0;
 
     rootNotEditable = new CustomTree(this);
     rootNotEditable->setEditable(false);
+    rootNotEditable->setStyleSheet("background-color:rgb(0,255,0);color:rgb(255,0,0)");
     rootNotEditable->setHeaderLabels(QStringList{ "单词表", "联想词" });
     rootNotEditable->setColumnCount(2);
 
     rootEditable = new CustomTree(this);
     rootEditable->setEditable(true);
+    rootEditable->setStyleSheet("background-color:rgb(255,0,0);color:rgb(0,255,0)");
     rootEditable->setHeaderLabels(QStringList{ "单词表", "联想词"});
     rootEditable->setColumnCount(2);
     
-    rootEditable->stackUnder(rootNotEditable);
+    //rootEditable->stackUnder(rootNotEditable);
     rootNotEditable->setVisible(true);
     rootEditable->setVisible(false);
 
@@ -52,20 +55,22 @@ void CustomTreeWidget::setEditable(bool e)
 		this->editable = e;
         if (this->editable)
         {
+            rootNotEditable->stackUnder(rootEditable);
             rootEditable->setVisible(true);
             rootNotEditable->setVisible(false);
         }
         else
         {
-            rootEditable->setVisible(false);
+            rootEditable->stackUnder(rootNotEditable);
             rootNotEditable->setVisible(true);
+            rootEditable->setVisible(false);
         }
 	}
 
 	emit editableChanged();
 }
 
-void CustomTreeWidget::setWords(QHash<QString, Word>* wds)
+void CustomTreeWidget::setWords(QList<QHash<QString, Word>>* wds)
 {
     if (wds == nullptr)
         return;
@@ -89,7 +94,7 @@ void CustomTreeWidget::setWordAddFillItemBottom(Word* wd)
     }
 }
 
-void CustomTreeWidget::showWWords()
+void CustomTreeWidget::showWords()
 {
     if (words == nullptr)
     {
@@ -99,15 +104,18 @@ void CustomTreeWidget::showWWords()
     if (editable)   
     {
         //编辑模式，显示分类，便于按分类编辑
-        for (auto iter = words->begin(); iter!=words->end();iter++)
+        QHash<QString, Word> curPageWords = (*words)[curPageIndex];
+        QList<QString> keys = curPageWords.keys();
+        for (int i = 0; i < keys.count(); i++)
         {
             QTreeWidgetItem* wordRoot = new QTreeWidgetItem();
-            
-            wordRoot->setText(0, iter->spelling);
+            const Word wd = curPageWords.value(keys.at(i));
+            wordRoot->setText(0, wd.spelling);
+            //wordRoot->setData(0, Qt::UserRole, wd);
 
             QTreeWidgetItem* meanings = new QTreeWidgetItem();
             meanings->setText(0, "释义");
-            for (auto item : iter->meanings)
+            for (auto item : wd.meanings)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -116,13 +124,13 @@ void CustomTreeWidget::showWWords()
             wordRoot->addChild(meanings);
 
             QTreeWidgetItem* partSpeech = new QTreeWidgetItem();
-            partSpeech->setText(0, iter->type);
+            partSpeech->setText(0, wd.type);
             wordRoot->addChild(partSpeech);
 
 
             QTreeWidgetItem* synonyms = new QTreeWidgetItem();
             synonyms->setText(0, "同义词");
-            for (auto item : iter->synonyms)
+            for (auto item : wd.synonyms)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -133,7 +141,7 @@ void CustomTreeWidget::showWWords()
 
             QTreeWidgetItem* anotonyms = new QTreeWidgetItem();
             anotonyms->setText(0, "反义词");
-            for (auto item : iter->antonyms)
+            for (auto item : wd.antonyms)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -144,7 +152,7 @@ void CustomTreeWidget::showWWords()
 
             QTreeWidgetItem* nearSynonyms = new QTreeWidgetItem();
             nearSynonyms->setText(0, "近义词");
-            for (auto item : iter->nearSynonyms)
+            for (auto item : wd.nearSynonyms)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -155,7 +163,7 @@ void CustomTreeWidget::showWWords()
 
             QTreeWidgetItem* similars = new QTreeWidgetItem();
             similars->setText(0, "形近词");
-            for (auto item : iter->similar)
+            for (auto item : wd.similar)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -166,7 +174,7 @@ void CustomTreeWidget::showWWords()
 
             QTreeWidgetItem* noun = new QTreeWidgetItem();
             noun->setText(0, "名词");
-            for (auto item : iter->noun)
+            for (auto item : wd.noun)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -177,7 +185,7 @@ void CustomTreeWidget::showWWords()
 
             QTreeWidgetItem* verb = new QTreeWidgetItem();
             verb->setText(0, "动词");
-            for (auto item : iter->verb)
+            for (auto item : wd.verb)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -188,7 +196,7 @@ void CustomTreeWidget::showWWords()
 
             QTreeWidgetItem* adj = new QTreeWidgetItem();
             adj->setText(0, "形容词");
-            for (auto item : iter->adj)
+            for (auto item : wd.adj)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -199,7 +207,7 @@ void CustomTreeWidget::showWWords()
 
             QTreeWidgetItem* adv = new QTreeWidgetItem();
             adv->setText(0, "副词");
-            for (auto item : iter->adv)
+            for (auto item : wd.adv)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -210,7 +218,7 @@ void CustomTreeWidget::showWWords()
 
             QTreeWidgetItem* usefulExpressions = new QTreeWidgetItem();
             usefulExpressions->setText(0, "常用搭配");
-            for (auto item : iter->usefulExpressions)
+            for (auto item : wd.usefulExpressions)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -225,69 +233,72 @@ void CustomTreeWidget::showWWords()
     else
     {
         //显示模式：不显示分类
-        for (auto iter=words->begin();iter!=words->end();iter++)
+        QHash<QString, Word> curPageWords = (*words)[curPageIndex];
+        QList<QString> keys = curPageWords.keys();
+        for (int i = 0; i < keys.count(); i++)
         {
             QTreeWidgetItem* wordRoot = new QTreeWidgetItem();
-            wordRoot->setText(0, iter->spelling);
+            const Word wd = curPageWords.value(keys.at(i));
+            wordRoot->setText(0, wd.spelling);
 
-            for (auto item : iter->meanings)
+            for (auto item : wd.meanings)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
             QTreeWidgetItem* wordTypeItem = new QTreeWidgetItem();
-            wordTypeItem->setText(1, iter->type);
+            wordTypeItem->setText(1, wd.type);
             wordRoot->addChild(wordTypeItem);
-            for (auto item : iter->synonyms)
+            for (auto item : wd.synonyms)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
-            for (auto item : iter->antonyms)
+            for (auto item : wd.antonyms)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
-            for (auto item : iter->nearSynonyms)
+            for (auto item : wd.nearSynonyms)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
-            for (auto item : iter->similar)
+            for (auto item : wd.similar)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
-            for (auto item : iter->noun)
+            for (auto item : wd.noun)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
-            for (auto item : iter->verb)
+            for (auto item : wd.verb)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
-            for (auto item : iter->adj)
+            for (auto item : wd.adj)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
-            for (auto item : iter->adv)
+            for (auto item : wd.adv)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
                 wordRoot->addChild(tempItem);
             }
-            for (auto item : iter->usefulExpressions)
+            for (auto item : wd.usefulExpressions)
             {
                 QTreeWidgetItem* tempItem = new QTreeWidgetItem();
                 tempItem->setText(1, item);
@@ -315,7 +326,7 @@ void CustomTreeWidget::keyPressEvent(QKeyEvent* event)
 
 }
 
-void CustomTreeWidget::onSelectedWordChanged(QString wd)
+void CustomTreeWidget::onSelectedWordChanged(Word wd)
 {
     selectedWord = wd;
     emit selectedWordChanged(selectedWord);

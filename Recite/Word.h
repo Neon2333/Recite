@@ -10,8 +10,6 @@ class Word  : public QObject
 {
 	Q_OBJECT
 
-    Q_PROPERTY(int myProperty READ getMyProperty WRITE setMyProperty)   //∑¥…‰
-
 public:
 	Word(QObject *parent);
     

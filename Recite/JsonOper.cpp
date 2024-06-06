@@ -80,14 +80,14 @@ QList<int> JsonOper::readConfig(QString configPath)
     }
 }
 
-void JsonOper::writeWords(QList<Word> words, QString jsonPath)
+void JsonOper::writeWords(QHash<QString,Word>* words, QString jsonPath)
 {
     QJsonArray root;
-
-    for(int i=0;i<words.count();i++)
+    QList<QString> keys = words->keys();
+    for(int i=0;i< keys.count();i++)
     {
         QJsonObject obj;
-        Word w = words.at(i);
+        const Word w = words->value(keys.at(i));
         obj.insert("pageIndex", w.pageIndex);
         obj.insert("spelling", w.spelling);
 
@@ -597,12 +597,14 @@ Word JsonOper::readWord(QJsonObject obj)
     return wordTemp;
 }
 
-QList<Word> JsonOper::readWords(QString jsonPath)
+bool JsonOper::readWords(QHash<QString, Word>* words, QString jsonPath)
 {
+    if (words == nullptr)  return false;
+
     QFile jsonFile(jsonPath);
     if(!jsonFile.open(QFile::ReadOnly))
     {
-        return QList<Word>{};
+        return false;
     }
     QByteArray jsonStrOld = jsonFile.readAll();
     jsonFile.close();
@@ -611,25 +613,23 @@ QList<Word> JsonOper::readWords(QString jsonPath)
 
     if(!doc.isArray())
     {
-        return QList<Word>{};
+        return false;
     }
 
     QJsonArray jsonArr = doc.array();
 
-
-    QList<Word> wordListTemp;
     for(int i=0;i<jsonArr.count();i++)
     {
         QJsonValue updateObject = jsonArr.at(i);
         if(!updateObject.isObject())
         {
-            return QList<Word>{};
+            return false;
         }
         QJsonObject temp = updateObject.toObject();
-
-        wordListTemp.append(JsonOper::readWord(temp));
+        Word wd = JsonOper::readWord(temp);
+        words->insert(wd.spelling, wd);
     }
-    return wordListTemp;
+    return true;
 }
 
 
