@@ -5,6 +5,7 @@
 #include "CustomTreeWidget.h"
 #include "Word.h"
 #include <QLabel>
+#include <QHash>
 
 class testWindow : public QMainWindow
 {

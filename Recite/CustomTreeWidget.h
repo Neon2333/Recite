@@ -25,45 +25,35 @@ public:
 
 	void setEditable(bool editable);
 
-	void setWords(QList<Word>* wds);
+	void setWords(QHash<QString, Word>* wds);
 
 	/// <summary>
 	/// 用传入的word填充一个edit模式下的itemTop
 	/// </summary>
 	/// <param name="wordRoot"></param>
 	/// <param name="wd"></param>
-	
 	void setWordAddFillItemTop(Word* wd);
 
 	void setWordAddFillItemBottom(Word* wd);
 
 	void showWWords();
 
-	void onSelectedWordChanged(QString wd);
-
 private:
 	Ui::CustomTreeWidgetClass ui;
 
-	void createItemTopFromWord(QTreeWidgetItem* wordRoot, Word* wd);
-
-	void createItemBottomFromWord(QTreeWidgetItem* wordRoot, Word* wd);
-
 	bool editable;
 
-	QList<Word>* words;
+	QHash<QString, Word>* words;
 
-	QString selectedWord;
+	QString selectedWord;	//recite模式使用
 	
-	CustomTree* rootNotEditable;	//非编辑模式
+	CustomTree* rootNotEditable;	//recite模式
 
 	QList<QTreeWidgetItem*> wordRootsNotEditable;
 
-	CustomTree* rootEditable;	//编辑模式
+	CustomTree* rootEditable;	//edit模式
 
 	QList<QTreeWidgetItem*> wordRootsEditable;
-
-	QTreeWidgetItem* itemAddToTop;
-	QTreeWidgetItem* itemAddToBottom;
 
 protected:
 	virtual void resizeEvent(QResizeEvent* event) override;
@@ -76,5 +66,5 @@ signals:
 	void selectedWordChanged(QString wd);
 
 public slots:
-
+	void onSelectedWordChanged(QString wd);
 };

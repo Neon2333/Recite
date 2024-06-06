@@ -3,6 +3,9 @@
 #include <QTreeWidget>
 #include <QKeyEvent>
 #include <QString>
+#include <QMetaObject>
+#include "Word.h"
+
 class CustomTree : public QTreeWidget
 {
 	Q_OBJECT
@@ -11,47 +14,57 @@ public:
 	CustomTree(QWidget *parent = nullptr);
 	~CustomTree();
 
-	/// <summary>
-	/// 设置是否编辑模式
-	/// </summary>
-	/// <param name="e"></param>
+	
 	void setEditable(bool e);
 
-	/// <summary>
-	/// 返回是否编辑模式
-	/// </summary>
-	/// <returns></returns>
 	bool getEditable();
 
-	/// <summary>
-	/// 递归移除指定item下所有item
-	/// </summary>
-	/// <param name="item"></param>
-	void removeItemRecursion(QTreeWidgetItem* item);
+	void setWords(QHash<QString, Word>* wds);
 
-	void setAddItemTopLevel(QTreeWidgetItem* item);
-
-	void setAddItemBottomLevel(QTreeWidgetItem* item);
-
+	void removeItemRecursion(QTreeWidgetItem* selItem);
+	
 	void addItem(QTreeWidgetItem* selItem);
+
+	void setAddItemTopLevel(Word* wd);
+
+	void setAddItemBottomLevel(Word* wd);
+
 
 private:
 
 	bool editable;
 
-	/// <summary>
-	/// 当前选中item的显示所在column
-	/// </summary>
+	QHash<QString, Word>* words;
+
 	int selColumn;	
 
-	QTreeWidgetItem* ItemAddToTopLevel;	//要添加的item
-	QTreeWidgetItem* ItemAddToBottomLevel;	
+	Word* wordAddToTopLevel;	
 
+	Word* wordAddToBottomLevel;	
 
+	QTreeWidgetItem* itemAddToTopLevel;//要添加的item
+
+	QTreeWidgetItem* itemAddToBottomLevel;
+
+	void createItemTopFromWord(QTreeWidgetItem* wordRoot, Word* wd);
+
+	void createItemBottomFromWord(QTreeWidgetItem* wordRoot, Word* wd);
+
+	const QMetaObject* metaObject;
+
+	void wordAdd(QHash<QString, Word>::iterator iter, QString category, QString item);
+	void wordDel(QHash<QString, Word>::iterator iter, QString category, QString item);
+	void wordModify(QHash<QString, Word>::iterator iter, QString category, QString item);
 
 protected:
 	virtual void keyPressEvent(QKeyEvent* event) override;
-
+	
 signals:
-	void selWdChanged(QString newWd);
+	void selWordChanged(QString wd);
+	void wordAdded(bool isTopItem, QString wd, QString category);	
+	void wordDeleted();
+	void wordModified();
+
+private slots:
+	void onItemModified(QTreeWidgetItem* item, int col);
 };

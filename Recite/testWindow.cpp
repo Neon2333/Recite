@@ -61,9 +61,9 @@ testWindow::testWindow(QWidget *parent)
     wdblank->adv = QList<QString>{ "" };
     wdblank->usefulExpressions = QList<QString>{ "" };
 
-    QList<Word>* list = new QList<Word>();
-    list->append(wd);
-    list->append(wd1);
+    QHash<QString, Word>* list = new QHash<QString, Word>();
+    list->insert(wd.spelling, wd);
+    list->insert(wd1.spelling, wd1);
     aaa->setWords(list);
     aaa->setWordAddFillItemTop(wdblank);
     aaa->setWordAddFillItemBottom(wdblank);
