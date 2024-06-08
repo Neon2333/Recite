@@ -69,7 +69,7 @@
 //    aaa->setWords(list);
 //    aaa->setWordAddFillItemTop(wdblank);
 //    aaa->setWordAddFillItemBottom(wdblank);
-//    aaa->setEditable(true);
+//    aaa->seteditMode(true);
 //    aaa->showWords();
 //}
 //

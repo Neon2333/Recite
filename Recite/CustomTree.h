@@ -5,23 +5,28 @@
 #include <QString>
 #include <QMetaObject>
 #include "Word.h"
+#include "GlobalApplication.h"
+
 
 class CustomTree : public QTreeWidget
 {
 	Q_OBJECT
 
 public:
-	CustomTree(QWidget *parent = nullptr);
+	CustomTree(GlobalApplication* a, QWidget* parent = nullptr);
+
 	~CustomTree();
-
 	
-	void setEditable(bool e);
-
-	bool getEditable();
+	void seteditMode(bool e);
+	bool geteditMode();
 
 	void setCurPageIndex(int pageIndex);
+	int getCurPageIndex();
 
-	void setWords(QList<QHash<QString, Word>>* wds);
+	void setCountWordList(int countWordList);
+	int getCountWordList();
+
+	void setWordsList(QList<QHash<QString, Word>>* wds);
 
 	void removeItemRecursion(QTreeWidgetItem* selItem);
 	
@@ -34,12 +39,13 @@ public:
 
 private:
 
-	bool editable;
+	bool isEditMode;
 
-	int curPageIndex = 0;
+	int curPageIndex = 0;   //当前页码（改变，要写入config）
 
-	//QHash<QString, Word>* words;
-	QList<QHash<QString, Word>>* words;
+	int countWordList = 0;  //单词表个数（改变，要写入config）
+
+	QList<QHash<QString, Word>>* wordsList;
 
 	int selColumn;	
 
@@ -47,7 +53,7 @@ private:
 
 	Word* wordAddToBottomLevel;	
 
-	QTreeWidgetItem* itemAddToTopLevel;//要添加的item
+	QTreeWidgetItem* itemAddToTopLevel;	//要添加的item
 
 	QTreeWidgetItem* itemAddToBottomLevel;
 
@@ -55,7 +61,6 @@ private:
 
 	void createItemBottomFromWord(QTreeWidgetItem* wordRoot, Word* wd);
 
-	bool addButNotModified;
 	void wordAdd(QHash<QString, Word>::iterator& iter, QString category, QString item);
 	void wordDel(QHash<QString, Word>::iterator& iter, QString category, QString item);
 	QString spellingBeforeModified;
@@ -67,8 +72,13 @@ protected:
 	virtual void keyPressEvent(QKeyEvent* event) override;
 	
 signals:
+	void modeChanged(bool isEditMode);
 	void selWordChanged(Word wd);
+	void curPageIndexChanged(int newIndex);
+	void countWordListChanged(int newCount);
 
 private slots:
+	void onKeyIPressed();
+	void onKeyRPressed();
 	void onItemModified(QTreeWidgetItem* item, int col);
 };

@@ -80,14 +80,14 @@ QList<int> JsonOper::readConfig(QString configPath)
     }
 }
 
-void JsonOper::writeWords(QHash<QString,Word>* words, QString jsonPath)
+void JsonOper::writeWords(const QHash<QString,Word> words, QString jsonPath)
 {
     QJsonArray root;
-    QList<QString> keys = words->keys();
+    QList<QString> keys = words.keys();
     for(int i=0;i< keys.count();i++)
     {
         QJsonObject obj;
-        const Word w = words->value(keys.at(i));
+        const Word w = words.value(keys.at(i));
         obj.insert("pageIndex", w.pageIndex);
         obj.insert("spelling", w.spelling);
 
@@ -300,8 +300,8 @@ void JsonOper::insertWord(Word w, int index, QString jsonPath)
 
 void JsonOper::appendWord(Word w, QString jsonPath)
 {
-    //读取已有json文件
     QFile jsonFile(jsonPath);
+    //读取已有json文件
     if(!jsonFile.open(QFile::ReadOnly))
     {
         //ReadOnly，文件不存在不创建，返回false

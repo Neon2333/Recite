@@ -1,56 +1,86 @@
 #include "CustomTree.h"
 #include<QDebug>
 
-CustomTree::CustomTree(QWidget *parent)
-	: QTreeWidget(parent)
+
+CustomTree::CustomTree(GlobalApplication* app, QWidget* parent)
+    :QTreeWidget(parent)
 {
-    editable = false;
+    isEditMode = false;
     selColumn = 0;
     itemAddToTopLevel = new QTreeWidgetItem();
     itemAddToBottomLevel = new QTreeWidgetItem();
 
-    addButNotModified = false;
     spellingBeforeModified = "";
     topSpellingOfModifiedItem = "";
     categoryOfModifiedItem = "";
 
+    connect(app, &GlobalApplication::keyIPressed, this, &CustomTree::onKeyIPressed);
+    connect(app, &GlobalApplication::keyRPressed, this, &CustomTree::onKeyRPressed);
     connect(this, &QTreeWidget::itemChanged, this, &CustomTree::onItemModified);
-
 }
 
 CustomTree::~CustomTree()
 {}
 
-void CustomTree::setEditable(bool e)
+void CustomTree::seteditMode(bool e)
 {
-    editable = e;
+    if (e != isEditMode)
+    {
+        isEditMode = e;
+        emit modeChanged(isEditMode);
+    }
 
 }
 
-bool CustomTree::getEditable()
+bool CustomTree::geteditMode()
 {
-    return editable;
+    return isEditMode;
 }
 
 void CustomTree::setCurPageIndex(int pageIndex)
 {
-    this->curPageIndex = pageIndex;
+    if (pageIndex != curPageIndex)
+    {
+        this->curPageIndex = pageIndex;
+        emit curPageIndexChanged(this->curPageIndex);
+    }
 }
 
-void CustomTree::setWords(QList<QHash<QString, Word>>* wds)
+int CustomTree::getCurPageIndex()
+{
+    return this->curPageIndex;
+}
+
+void CustomTree::setCountWordList(int countWordList)
+{
+    if (this->countWordList != countWordList)
+    {
+        this->countWordList = countWordList;
+        emit countWordListChanged(this->countWordList);
+    }
+}
+
+int CustomTree::getCountWordList()
+{
+    return this->countWordList;
+}
+
+
+void CustomTree::setWordsList(QList<QHash<QString, Word>>* wds)
 {
     if (wds == nullptr)
         return;
-    this->words = wds;
+    this->wordsList = wds;
 }
 
 void CustomTree::removeItemRecursion(QTreeWidgetItem* selItem)
 {
-    QHash<QString, Word>& curPageWords = (*words)[curPageIndex];
+    QHash<QString, Word>& curPageWords = (*wordsList)[curPageIndex - 1];
+    if (curPageWords.count() == 1 && curPageWords.contains("Nan")) return;
     
     int count = selItem->childCount();
     if (count == 0) {
-        // 没有子节点，直接删除
+        // 没有子节点
         auto iter = curPageWords.find(selItem->parent()->parent()->text(0));
         QString category = selItem->parent()->text(0);
         wordDel(iter, category, selItem->text(1));
@@ -67,33 +97,42 @@ void CustomTree::removeItemRecursion(QTreeWidgetItem* selItem)
 
 void CustomTree::addItem(QTreeWidgetItem* selItem)
 {
-    QHash<QString, Word>& curPageWords = (*words)[curPageIndex];
+    QHash<QString, Word>& curPageWords = (*wordsList)[curPageIndex - 1];
 
     if (selItem->parent() == nullptr)
     {
-        if (addButNotModified)
-        {
-            return;
-        }
-        this->addTopLevelItem(itemAddToTopLevel);
-        setItemSelected(itemAddToTopLevel, true);
+        if (curPageWords.contains("NaN"))    return;
+
         if (curPageWords.count() <= 60)
         {
-            curPageWords.insert(wordAddToTopLevel->spelling, wordAddToTopLevel);
+            //没到60个词直接添加NaN
+            this->addTopLevelItem(itemAddToTopLevel);   //树形加Nan
+            setItemSelected(itemAddToTopLevel, true);   //选中
+            emit selWordChanged(*wordAddToTopLevel);
+            curPageWords.insert(wordAddToTopLevel->spelling, wordAddToTopLevel);    
         }
         else
         {
-            //add a json
-            //countWordList++
+            //超过60个词
+            this->setCurPageIndex(curPageIndex + 1);    //当前页码+1，发射页码change事件
+            this->clear();  //清空当前树形
+            this->addTopLevelItem(itemAddToTopLevel);   //树形加个NaN
+            setItemSelected(itemAddToTopLevel, true);   //选择新加的NaN
+            emit selWordChanged(*wordAddToTopLevel);
+            QHash<QString, Word> curPageWordsTemp;
+            curPageWordsTemp.insert(wordAddToTopLevel->spelling, wordAddToTopLevel);    //新建个hash添加Nan
+            wordsList->append(curPageWordsTemp);    //加入words
         }
 
     }
     else if (selItem->childCount() == 0)
     {
-        selItem->parent()->addChild(itemAddToBottomLevel);
-        setItemSelected(itemAddToBottomLevel, true);
         auto iter = curPageWords.find(selItem->parent()->parent()->text(0));
         QString category = selItem->parent()->text(0);
+
+        selItem->parent()->addChild(itemAddToBottomLevel);
+        setItemSelected(itemAddToBottomLevel, true);
+        emit selWordChanged(*wordAddToBottomLevel);
         wordAdd(iter, category, wordAddToBottomLevel->spelling);
     }
 }
@@ -243,42 +282,61 @@ void CustomTree::wordAdd(QHash<QString,Word>::iterator& iter, QString category, 
 {
     if (category == "释义")
     {
+        if (iter->meanings.contains("NaN"))  return;
         iter->meanings.append(item);
     }
     else if (category == "同义词")
     {
+        if (iter->synonyms.contains("NaN"))  return;
+
         iter->synonyms.append(item);
     }
     else if (category == "反义词")
     {
+        if (iter->antonyms.contains("NaN"))  return;
+
         iter->antonyms.append(item);
     }
     else if (category == "近义词")
     {
+        if (iter->nearSynonyms.contains("NaN"))  return;
+
         iter->nearSynonyms.append(item);
     }
     else if (category == "形近词")
     {
+        if (iter->similar.contains("NaN"))  return;
+
         iter->similar.append(item);
     }
     else if (category == "名词")
     {
+        if (iter->noun.contains("NaN"))  return;
+
         iter->noun.append(item);
     }
     else if (category == "动词")
     {
+        if (iter->verb.contains("NaN"))  return;
+
         iter->verb.append(item);
     }
     else if (category == "形容词")
     {
+        if (iter->adj.contains("NaN"))  return;
+
         iter->adj.append(item);
     }
     else if (category == "副词")
     {
+        if (iter->adv.contains("NaN"))  return;
+
         iter->adv.append(item);
     }
     else if (category == "常用搭配")
     {
+        if (iter->usefulExpressions.contains("NaN"))  return;
+
         iter->usefulExpressions.append(item);
     }
 }
@@ -287,42 +345,61 @@ void CustomTree::wordDel(QHash<QString, Word>::iterator& iter, QString category,
 {
     if (category == "释义")
     {
+        if (iter->meanings.count() == 1 && iter->meanings.contains("NaN"))   return;
         iter->meanings.removeOne(item);
     }
     else if (category == "同义词")
     {
+        if (iter->synonyms.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->synonyms.removeOne(item);
     }
     else if (category == "反义词")
     {
+        if (iter->antonyms.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->antonyms.removeOne(item);
     }
     else if (category == "近义词")
     {
+        if (iter->nearSynonyms.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->nearSynonyms.removeOne(item);
     }
     else if (category == "形近词")
     {
+        if (iter->similar.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->similar.removeOne(item);
     }
     else if (category == "名词")
     {
+        if (iter->noun.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->noun.removeOne(item);
     }
     else if (category == "动词")
     {
+        if (iter->verb.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->verb.removeOne(item);
     }
     else if (category == "形容词")
     {
+        if (iter->adj.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->adj.removeOne(item);
     }
     else if (category == "副词")
     {
+        if (iter->adv.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->adv.removeOne(item);
     }
     else if (category == "常用搭配")
     {
+        if (iter->usefulExpressions.count() == 1 && iter->meanings.contains("NaN"))   return;
+
         iter->usefulExpressions.removeOne(item);
     }
 }
@@ -421,7 +498,7 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
                 /* scrollToItem(selItems.at(0)->child(0));
                  setItemSelected(selItems.at(0)->child(0), true);*/
 
-                if (editable)
+                if (editMode)
                 {
                     //3列
                     selColumn < 2 ? selColumn++ : selColumn;
@@ -497,7 +574,7 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
 
     else if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return && !event->isAutoRepeat())
     {
-        if (editable)
+        if (isEditMode)
         {
             //确认修改
             QTreeWidget::keyPressEvent(event);
@@ -513,17 +590,17 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
             if (selItems.at(0))
             {
                 scrollToItem(selItems.at(0));
-                Word selWord = (*words)[curPageIndex][selItems.at(0)->text(selColumn)];
+                Word selWord = (*wordsList)[curPageIndex - 1][selItems.at(0)->text(selColumn)];
                 emit selWordChanged(selWord);
             }
         }
     }
 
     //增加
-    else if(editable && event->key()==Qt::Key_A && !event->isAutoRepeat())
+    else if(isEditMode && event->key()==Qt::Key_A && !event->isAutoRepeat())
     {
-        if(!editable)   return;
-            
+        if(!isEditMode)   return;
+    
         keyDPressCount = 0;  //清空按键残留
         keyWPressCount = 0;
         keyAPressCount++;
@@ -541,9 +618,9 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
     }
 
     //删除(dd)
-    else if (editable && event->key() == Qt::Key_D && !event->isAutoRepeat()) 
+    else if (isEditMode && event->key() == Qt::Key_D && !event->isAutoRepeat())
     {
-        if (!editable)   return;
+        if (!isEditMode)   return;
 
         keyAPressCount = 0;
         keyWPressCount = 0;
@@ -567,7 +644,7 @@ void CustomTree::keyPressEvent(QKeyEvent * event)
     //修改（ww)
     else if (event->key() == Qt::Key_W && !event->isAutoRepeat())    
     {
-        if (!editable)   return;
+        if (!isEditMode)   return;
 
         keyAPressCount = 0;
         keyDPressCount = 0;
@@ -611,11 +688,30 @@ void CustomTree::onItemModified(QTreeWidgetItem* item, int col)
 {
     if (item->parent() == nullptr)
     {
-        (*words)[curPageIndex][spellingBeforeModified].spelling = item->text(col);
+        (*wordsList)[curPageIndex - 1][spellingBeforeModified].spelling = item->text(col);
     }
     else if (item->childCount() == 0)
     {
-        auto iter = (*words)[curPageIndex].find(topSpellingOfModifiedItem);
+        auto iter = (*wordsList)[curPageIndex - 1].find(topSpellingOfModifiedItem);
         wordModify(iter, categoryOfModifiedItem, spellingBeforeModified);
     }
 }
+
+void CustomTree::onKeyIPressed()
+{
+    if (!isEditMode)
+    {
+        isEditMode = true;
+        emit modeChanged(true);
+    }
+}
+
+void CustomTree::onKeyRPressed()
+{
+    if (isEditMode)
+    {
+        isEditMode = false;
+        emit modeChanged(false);
+    }
+}
+

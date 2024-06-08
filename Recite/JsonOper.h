@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QJsonValue>
 
 ///固定格式json文件解析类
 class JsonOper  : public QObject
@@ -22,11 +23,11 @@ public:
 
     static void writeConfig(QString configPath, int curPageIndex, int countWordList);         //将index写入config.json
 
-    static void writeWords(QHash<QString,Word>* words, QString jsonPath);    //清空当前json并写入
+    static void writeWords(QHash<QString,Word> words, QString jsonPath);    //清空当前json并写入
+    
+    static void appendWord(Word w, QString jsonPath);   //在json数组后面添加word
 
     static void insertWord(Word w, int index, QString jsonPath);    //把word添加到数组index位置
-
-    static void appendWord(Word w, QString jsonPath);   //在json数组后面添加word
 
     static void updateWord(QString spelling, Word w, QString jsonPath);   //修改json文件某个word的属性
 
